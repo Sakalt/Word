@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>単語生成アプリ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .output {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>単語生成アプリ</h1>
+    <form id="settingsForm">
+        <label for="vowels">母音:</label>
+        <input type="text" id="vowels" name="vowels" placeholder="例: a, e, i, o, u"><br><br>
+        <label for="consonants">子音:</label>
+        <input type="text" id="consonants" name="consonants" placeholder="例: b, c, d, f, g"><br><br>
+        <label for="syllables">音節:</label>
+        <input type="number" id="syllables" name="syllables" min="1"><br><br>
+        <label for="length">単語の長さ:</label>
+        <input type="number" id="length" name="length" min="1"><br><br>
+        <label for="japaneseWords">日本語単語 (コンマで区切り):</label>
+        <input type="text" id="japaneseWords" name="japaneseWords" placeholder="例: 単語1, 単語2"><br><br>
+        <button type="button" onclick="generateWords()">単語生成</button>
+    </form>
+    
+    <div class="output" id="mediawikiOutput"></div>
+    <div class="output" id="jsonOutput"></div>
+    <div class="output" id="japaneseTableOutput"></div>
+
+    <script>
+        function generateWords() {
+            // 入力を取得
+            const vowels = document.getElementById('vowels').value.split(',').map(v => v.trim());
+            const consonants = document.getElementById('consonants').value.split(',').map(c => c.trim());
+            const syllables = parseInt(document.getElementById('syllables').value);
+            const length = parseInt(document.getElementById('length').value);
+            const japaneseWords = document.getElementById('japaneseWords').value.split(',').map(word => word.trim());
+
+            // 単語生成のロジック（ここではダミーの単語を生成しています）
+            const words = generateRandomWords(vowels, consonants, syllables, length);
+
+            // MediaWiki テーブル形式
+            const mediawikiOutput = generateMediaWikiTable(words);
+            document.getElementById('mediawikiOutput').innerHTML = `<h2>MediaWiki テーブル</h2>${mediawikiOutput}`;
+
+            // JSON形式
+            const jsonOutput = generateJSON(words);
+            document.getElementById('jsonOutput').innerHTML = `<h2>JSON形式</h2><pre>${JSON.stringify(jsonOutput, null, 2)}</pre>`;
+
+            // 日本語単語の対応表
+            const japaneseTableOutput = generateJapaneseTable(japaneseWords);
+            document.getElementById('japaneseTableOutput').innerHTML = `<h2>日本語単語の対応表</h2>${japaneseTableOutput}`;
+        }
+
+        function generateRandomWords(vowels, consonants, syllables, length) {
+            const words = [];
+            for (let i = 0; i < 10; i++) {
+                let word = '';
+                for (let j = 0; j < length; j++) {
+                    const isVowel = Math.random() < 0.5;
+                    if (isVowel) {
+                        word += vowels[Math.floor(Math.random() * vowels.length)];
+                    } else {
+                        word += consonants[Math.floor(Math.random() * consonants.length)];
+                    }
+                }
+                words.push({ 
+                    "entry": { "id": i + 1, "form": word },
+                    "translations": [],
+                    "tags": [],
+                    "contents": [],
+                    "variations": [],
+                    "relations": []
+                });
+            }
+            return words;
+        }
+
+        function generateMediaWikiTable(words) {
+            let table = '{| class="wikitable"\n|+ 単語リスト\n|- \n! ID !! 単語 !! 訳語 !! タグ !! 内容 !! 変化形 !! 関連語\n';
+            words.forEach(word => {
+                table += `|- \n| ${word.entry.id} || ${word.entry.form} || ${word.translations.map(t => t.forms.join(', ')).join(', ')} || ${word.tags.join(', ')} || ${word.contents.map(c => c.text).join(', ')} || ${word.variations.map(v => v.form).join(', ')} || ${word.relations.map(r => r.entry.form).join(', ')}\n`;
+            });
+            table += '|}';
+            return table;
+        }
+
+        function generateJSON(words) {
+            return {
+                "words": words,
+                "version": 2,
+                "settings": {
+                    "zpdic": {
+                        "punctuations": ["、", "。"],
+                        "pronunciationTitle": "発音"
+                    },
+                    "zpdicOnline": {
+                        "explanation": "辞書ページの説明",
+                        "enableMarkdown": true
+                    }
+                }
+            };
+        }
+
+        function generateJapaneseTable(words) {
+            let table = '<table border="1"><thead><tr><th>日本語単語</th></tr></thead><tbody>';
+            words.forEach(word => {
+                table += `<tr><td>${word}</td></tr>`;
+            });
+            table += '</tbody></table>';
+            return table;
+        }
+    </script>
+</body>
+</html>
